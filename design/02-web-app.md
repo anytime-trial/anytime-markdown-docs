@@ -213,7 +213,7 @@ Serwist を使用してサービスワーカーを生成する。
 
 | 変数名 | 用途 | デフォルト |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SITE_URL` | サイトベース URL | `https://anytime-markdown.vercel.app` |
+| `NEXT_PUBLIC_SITE_URL` | サイトベース URL | `https://www.anytime-trial.com` |
 | `NEXT_PUBLIC_GA_ID` | Google Analytics ID | (省略可) |
 | `NEXT_PUBLIC_SHOW_READONLY_MODE` | Readonly モード表示 | (省略可) |
 | `ANYTIME_AWS_REGION` | AWS リージョン | `ap-northeast-1` |
