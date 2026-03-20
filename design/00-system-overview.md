@@ -1,6 +1,6 @@
 # システム全体設計書
 
-更新日: 2026-03-08
+更新日: 2026-03-20
 
 
 ## 1. プロジェクト概要
@@ -159,8 +159,9 @@ flowchart LR
 | コメント | インラインコメント |
 | 脚注 | 脚注参照 |
 | エクスポート | PDF エクスポート |
-| テンプレート | スラッシュコマンドによるテンプレート挿入 |
+| テンプレート | スラッシュコマンドによるテンプレート挿入（Welcome, Markdown All, 基本設計書, API 仕様書） |
 | 番号 | セクション自動番号 |
+| 用紙サイズ | 用紙サイズに合わせた横幅制限表示（A3 / A4 / B4 / B5、余白調整可） |
 | 国際化 | 日本語 / 英語 対応 |
 | Admonition | GitHub 形式の注意ブロック（NOTE, WARNING 等） |
 | 折りたたみ | HTML5 `<details>` 要素 |
@@ -221,7 +222,7 @@ flowchart LR
 
 - push to `master` / `develop` および PR で CI を実行する。
 - `master` への push 時に VS Code Marketplace へ自動公開する。
-- 毎日 JST 6:00 に日次ビルドチェックを実行する。
+- 毎日 JST 6:00 に日次ビルドチェック（ビルド + CodeQL + SonarCloud）を実行する。
 
 
 ### 8.2 テスト構成
@@ -233,6 +234,14 @@ flowchart LR
 | 拡張テスト | @vscode/test-electron | `vscode-extension` |
 
 
+### 8.3 コード品質
+
+| ツール | 用途 |
+| --- | --- |
+| SonarCloud | カバレッジ・保守性・セキュリティの継続的分析 |
+| CodeQL | セキュリティ脆弱性の静的解析（日次ビルドで実行） |
+
+
 ## 9. セキュリティ
 
 - HTML サニタイズに DOMPurify を使用する。
@@ -240,3 +249,5 @@ flowchart LR
 - CSP ヘッダーを middleware で設定する（nonce ベース）。
 - パストラバーサル防止チェックを API ルートに実装する。
 - 検索・置換で ReDoS 防止を実装する。
+- CodeQL による静的セキュリティ解析を日次で実行する。
+- VS Code 拡張で `execFileSync` を使用しコマンドインジェクションを防止する。

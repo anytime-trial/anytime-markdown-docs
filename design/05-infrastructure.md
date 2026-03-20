@@ -1,6 +1,6 @@
 # インフラ・CI/CD 設計書
 
-更新日: 2026-03-08
+更新日: 2026-03-20
 
 
 ## 1. 概要
@@ -56,7 +56,7 @@ flowchart TD
 | ワークフロー | トリガー | 目的 |
 | --- | --- | --- |
 | CI / Publish | push to `master`/`develop`、PR | ビルド検証 + 自動公開 |
-| Daily Build | 毎日 JST 6:00 | 定期的な品質チェック |
+| Daily Build | 毎日 JST 6:00 | 定期的な品質チェック + CodeQL + SonarCloud |
 | Cache Cleanup | 毎週日曜 JST 6:00 | 7日以上未使用のキャッシュ削除 |
 
 ### 3.2 CI ジョブのステップ
@@ -65,7 +65,7 @@ flowchart TD
 flowchart LR
     %% ノード定義
     Checkout["Checkout"]
-    Setup["Node.js 20<br/>npm cache"]
+    Setup["Node.js 22<br/>npm cache"]
     Install["npm ci"]
     Audit["npm audit<br/><small>--audit-level=high</small>"]
     TypeCheck["tsc --noEmit"]
@@ -98,6 +98,21 @@ flowchart LR
 6. VSIX ファイルをアーティファクトとしてアップロードする。
 
 > 認証には GitHub Secrets の `VSCE_PAT` を使用する。
+
+
+### 3.4 Daily Build の追加ジョブ
+
+日次ビルドでは CI ステップに加えて以下のジョブを実行する。
+
+| ジョブ | ツール | 目的 |
+| --- | --- | --- |
+| CodeQL | `github/codeql-action` | JavaScript/TypeScript のセキュリティ・品質の静的解析 |
+| SonarCloud | `SonarSource/sonarqube-scan-action` | カバレッジ・保守性・セキュリティの継続的分析 |
+
+SonarCloud はユニットテストのカバレッジレポート（lcov 形式）を `editor-core` と `web-app` から収集し、分析に使用する。\
+設定は `sonar-project.properties` で管理する。
+
+> SonarCloud の認証には GitHub Secrets の `SONAR_TOKEN` を使用する。
 
 
 ## 4. 開発環境
@@ -195,6 +210,9 @@ s3://{S3_DOCS_BUCKET}/
 | HTML サニタイズ | DOMPurify でレンダリング前にサニタイズ |
 | 検索 | ReDoS 防止付き正規表現検索 |
 | 依存関係 | `npm audit --audit-level=high` を CI で実行 |
+| 静的解析 | CodeQL による日次セキュリティスキャン |
+| コマンド実行 | VS Code 拡張で `execFileSync` を使用（コマンドインジェクション防止） |
+| コード品質 | SonarCloud による継続的なセキュリティ・品質分析 |
 
 
 ### 7.2 環境変数管理
@@ -237,3 +255,5 @@ flowchart LR
 | Google Analytics | ページビュー、ユーザー行動の追跡 |
 | GitHub Actions | CI/CD の実行結果、ビルド成功率 |
 | npm audit | 依存パッケージの脆弱性検出 |
+| SonarCloud | カバレッジ、保守性、信頼性、セキュリティの継続的監視 |
+| CodeQL | セキュリティ脆弱性の静的検出 |

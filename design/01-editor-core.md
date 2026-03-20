@@ -1,6 +1,6 @@
 # editor-core パッケージ設計書
 
-更新日: 2026-03-08
+更新日: 2026-03-20
 
 
 ## 1. 概要
@@ -24,6 +24,7 @@ packages/editor-core/
 │   │   └── codeblock/           コードブロックレンダラー（5種）
 │   ├── extensions/              カスタム Tiptap 拡張（13+）
 │   ├── hooks/                   React フック（27個）
+│   ├── icons/                   カスタムアイコンコンポーネント
 │   ├── constants/               定数・テンプレート
 │   │   └── templates/           Markdown テンプレートファイル
 │   ├── i18n/                    国際化（en.json, ja.json）
@@ -228,17 +229,18 @@ flowchart TD
 
 | コンポーネント | 機能 |
 | --- | --- |
-| `EditorToolbar` | フォーマットボタン、ブロック挿入 |
+| `EditorToolbar` | フォーマットボタン、ブロック挿入、アプリアイコンメニュー |
+| `EditorSideToolbar` | 右端の縦ツールバー（アウトライン、コメント、エクスプローラー、設定） |
 | `EditorBubbleMenu` | 選択テキストのコンテキストメニュー |
-| `EditorMenuPopovers` | スタイルオプションのポップオーバー |
-| `SlashCommandMenu` | `/` コマンドパレット |
+| `EditorMenuPopovers` | バージョン情報等のポップオーバー |
+| `SlashCommandMenu` | `/` コマンドパレット（テンプレート挿入を含む） |
 
 ### 7.2 パネル
 
 | コンポーネント | 機能 |
 | --- | --- |
 | `OutlinePanel` | 文書構造（見出し一覧）の表示 |
-| `EditorSettingsPanel` | レイアウト・フォント・テーマ設定 |
+| `EditorSettingsPanel` | レイアウト・フォント・テーマ・用紙サイズ設定 |
 | `SearchReplaceBar` | 検索・置換 UI |
 | `CommentPanel` / `CommentPopover` | コメント一覧とスレッド UI |
 | `SourceModeEditor` | 生 Markdown テキストエリア |
@@ -263,6 +265,43 @@ flowchart TD
 | `CodeBlockFrame` | 共通コンテナ（折りたたみ・全画面ボタン） |
 
 
+### 7.5 スタイル
+
+| モジュール | 責務 |
+| --- | --- |
+| `editorStyles.ts` | エディタ Paper の sx 生成（用紙サイズ制限、スクロールバーカスタマイズを含む） |
+| `headingStyles.ts` | 見出しスタイル（左ボーダー + 背景グラデーション）、ブロックラベル |
+| `baseStyles.ts` | ベーススタイル |
+| `blockStyles.ts` | ブロック要素スタイル |
+| `codeStyles.ts` | コードブロックスタイル |
+| `inlineStyles.ts` | インライン要素スタイル |
+
+用紙サイズ表示が有効な場合、`.tiptap` に `max-width` を適用し本文を中央寄せする。\
+用紙幅外の背景色を変えて境界を視覚化している。
+
+
+### 7.6 アイコン
+
+| コンポーネント | 説明 |
+| --- | --- |
+| `AppIcon` | アプリのラクダロゴ（PNG 画像ベース） |
+| `MermaidIcon` | Mermaid.js ロゴ（SVG） |
+| `MarkdownIcon` | Markdown Mark ロゴ（SVG） |
+
+
+### 7.7 テンプレート
+
+| テンプレート | ファイル | 用途 |
+| --- | --- | --- |
+| Welcome | `welcome.md` / `welcome-en.md` | 初回表示用の簡易ガイド |
+| Markdown All | `markdownAll.md` / `markdownAll-en.md` | 全 Markdown 表現のガイド |
+| 基本設計書 | `basicDesign.md` | 設計書テンプレート |
+| API 仕様書 | `apiSpec.md` | API ドキュメントテンプレート |
+
+テンプレートはスラッシュコマンド `/` から挿入可能。\
+初回表示には Welcome が使用され、`defaultContent.ts` 経由で提供される。
+
+
 ## 8. 設定項目
 
 `useEditorSettings` で localStorage に保存される設定項目。
@@ -270,14 +309,16 @@ flowchart TD
 | キー | 型 | デフォルト | 説明 |
 | --- | --- | --- | --- |
 | `lineHeight` | `number` | `1.6` | 行の高さ |
-| `fontSize` | `number` | `14` | フォントサイズ（px） |
+| `fontSize` | `number` | `16` | フォントサイズ（px） |
 | `tableWidth` | `string` | `"auto"` | テーブル幅（`"auto"` or `"100%"`） |
 | `editorBg` | `string` | `"white"` | 背景色プリセット |
-| `lightBgColor` | `string` | - | カスタムライト背景色 |
-| `lightTextColor` | `string` | - | カスタムライトテキスト色 |
-| `darkBgColor` | `string` | - | カスタムダーク背景色 |
-| `darkTextColor` | `string` | - | カスタムダークテキスト色 |
-| `showHeadingNumbers` | `boolean` | `false` | 見出し番号の表示 |
+| `lightBgColor` | `string` | `""` | カスタムライト背景色（空文字 = テーマデフォルト） |
+| `lightTextColor` | `string` | `""` | カスタムライトテキスト色 |
+| `darkBgColor` | `string` | `""` | カスタムダーク背景色 |
+| `darkTextColor` | `string` | `""` | カスタムダークテキスト色 |
+| `spellCheck` | `boolean` | `false` | スペルチェックの有効化 |
+| `paperSize` | `string` | `"off"` | 用紙サイズ表示（`"off"` / `"A3"` / `"A4"` / `"B4"` / `"B5"`） |
+| `paperMargin` | `number` | `20` | 用紙余白（mm、10-40） |
 
 
 ## 9. キーボードショートカット

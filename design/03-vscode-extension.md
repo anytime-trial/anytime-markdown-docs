@@ -1,6 +1,6 @@
 # vscode-extension パッケージ設計書
 
-更新日: 2026-03-08
+更新日: 2026-03-20
 
 
 ## 1. 概要
@@ -170,7 +170,7 @@ flowchart TD
 | --- | --- | --- |
 | `hideFileOps` | `true` | VS Code がファイル管理を担当 |
 | `hideUndoRedo` | `true` | VS Code が Undo/Redo を管理 |
-| `hideSettings` | `true` | VS Code の設定画面を使用 |
+| `hideSettings` | `false` | サイドツールバーから設定パネルを開く |
 | `hideHelp` | `true` | VS Code のヘルプを使用 |
 | `hideVersionInfo` | `true` | VS Code に表示不要 |
 
