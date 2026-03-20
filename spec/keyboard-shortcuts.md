@@ -1,6 +1,6 @@
 # キーボードショートカット一覧
 
-更新日: 2026-03-18
+更新日: 2026-03-20
 
 凡例:
 
@@ -47,10 +47,10 @@
 
 | ショートカット | 動作 | WYSIWYG | Source | Review | Readonly | Web | VS | 備考 |
 | --- | --- | :---: | :---: | :---: | :---: | :---: | :---: | --- |
-| Alt+Up | ブロックを上に移動 | o | x | x | x | o | o | |
-| Alt+Down | ブロックを下に移動 | o | x | x | x | o | o | |
-| Shift+Alt+Up | ブロックを上に複製 | o | x | x | x | o | o | |
-| Shift+Alt+Down | ブロックを下に複製 | o | x | x | x | o | o | |
+| Alt+Up | ブロックを上に移動 | o | x | x | x | o | o | Chromium で競合あり（後述） |
+| Alt+Down | ブロックを下に移動 | o | x | x | x | o | o | Chromium で競合あり（後述） |
+| Shift+Alt+Up | ブロックを上に複製 | o | x | x | x | o | o | Chromium で競合あり（後述） |
+| Shift+Alt+Down | ブロックを下に複製 | o | x | x | x | o | o | Chromium で競合あり（後述） |
 | Mod+Alt+F | 全ブロック展開/折りたたみ | o | x | x | x | o | o | |
 
 
@@ -179,3 +179,17 @@
 | 貼り付け | Mod+V | o | x | o | o |
 | Markdown で貼り付け | Mod+Shift+V | o | x | o | o |
 | コードブロックで貼り付け | — | o | x | o | o |
+
+
+## 17. ブラウザネイティブショートカットとの競合
+
+以下のショートカットは、Chromium 系ブラウザ（Chrome / Edge）のネイティブショートカットと競合する場合がある。エディタ側で `preventDefault` しているが、タイミングによってはブラウザが先に処理する場合がある。
+
+| ショートカット | ブラウザの動作 | 影響 | 対策 |
+| --- | --- | --- | --- |
+| Alt+Down | Chromium: ページ下部へのスクロール（一部環境） | ブロック移動が動作しない場合がある | エディタにフォーカスがあれば動作する。E2E テストでは focus() + waitForTimeout で安定化 |
+| Alt+Up | Chromium: ページ上部へのスクロール（一部環境） | ブロック移動が動作しない場合がある | 同上 |
+| Shift+Alt+Down | Chromium: 行の複製（DevTools 等） | ブロック複製が動作しない場合がある | 同上 |
+| Shift+Alt+Up | Chromium: 行の複製（DevTools 等） | ブロック複製が動作しない場合がある | 同上 |
+
+Firefox / WebKit ではこの競合は発生しない。VS Code 拡張では webview 内のため競合しない。
