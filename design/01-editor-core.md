@@ -1,6 +1,6 @@
 # editor-core パッケージ設計書
 
-更新日: 2026-03-20
+更新日: 2026-03-21
 
 
 ## 1. 概要
@@ -189,7 +189,8 @@ flowchart TD
 | `useMermaidRender` | Mermaid ダイアグラムの SVG レンダリング |
 | `usePlantUmlRender` | PlantUML ダイアグラムの画像レンダリング |
 | `useKatexRender` | KaTeX 数式のレンダリング |
-| `useDiagramCapture` | ダイアグラムのスクリーンショット取得 |
+| `useDiagramCapture` | ダイアグラムの PNG/SVG エクスポート |
+| `useBlockCapture` | ブロック要素の PNG エクスポート（`showSaveFilePicker` 対応） |
 | `useDiffBackground` | diff 行の背景色設定 |
 | `useDiffHighlight` | diff テキストのハイライト |
 | `useCodeBlockAutoCollapse` | コードブロックの自動折りたたみ |
@@ -221,6 +222,7 @@ flowchart TD
 | `sectionHelpers.ts` | 見出し範囲の特定・セクション移動 |
 | `tableHelpers.ts` | テーブル行列の操作 |
 | `tocHelpers.ts` | 目次リンク用の GitHub スラグ生成 |
+| `base64Collapse.ts` | ソースモードで base64 画像データを短いトークンに置換・復元 |
 
 
 ## 7. コンポーネント構成
@@ -243,7 +245,7 @@ flowchart TD
 | `EditorSettingsPanel` | レイアウト・フォント・テーマ・用紙サイズ設定 |
 | `SearchReplaceBar` | 検索・置換 UI |
 | `CommentPanel` / `CommentPopover` | コメント一覧とスレッド UI |
-| `SourceModeEditor` | 生 Markdown テキストエリア |
+| `SourceModeEditor` | 生 Markdown テキストエリア。base64 画像データはトークンに折りたたんで表示し、バッジ風オーバーレイで視覚的に区別 |
 | `MergeEditorPanel` / `InlineMergeView` | diff 比較・マージ UI |
 
 ### 7.3 ダイアログ
@@ -253,6 +255,7 @@ flowchart TD
 | `HelpDialog` | キーボードショートカット一覧 |
 | `CodeBlockFullscreenDialog` | コードブロックの全画面編集 |
 | `DiagramFullscreenDialog` | ダイアグラムの全画面編集 |
+| `ScreenCaptureDialog` | 画面キャプチャ（`getDisplayMedia` → プレビュー → キャプチャ → トリミング） |
 
 ### 7.4 コードブロックレンダラー
 
