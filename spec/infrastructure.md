@@ -1,9 +1,15 @@
-# インフラ構成図
+# インフラ構成
 
-更新日: 2026-03-08
+更新日: 2026-03-21
+
+Anytime Markdown のインフラ構成を図と表で整理したドキュメント。
+全体構成、CI/CD、データフロー、開発環境、S3 フォルダ構成を含む。
 
 
 ## 1. 全体構成
+
+ブラウザ・VS Code・Android の3プラットフォームから利用できる。
+ホスティングは Netlify、ドキュメント格納は AWS S3 を使用する。
 
 ```mermaid
 flowchart TB
@@ -62,6 +68,8 @@ flowchart TB
 
 ## 2. CI/CD パイプライン
 
+GitHub Actions による自動化パイプライン。push 時のビルド・テスト・デプロイに加え、定期的なセキュリティ監査を実施する。
+
 ```mermaid
 flowchart LR
     %% スタイル定義
@@ -113,6 +121,9 @@ flowchart LR
 
 ## 3. データフロー（ドキュメント管理）
 
+ランディングページのドキュメント表示・CMS 操作（アップロード・削除・レイアウト管理）のデータフロー。
+CMS 操作は Basic 認証で保護される。
+
 ```mermaid
 flowchart LR
     %% スタイル定義
@@ -127,8 +138,8 @@ flowchart LR
 
     ListAPI["GET /api/docs<br/><small>一覧取得</small>"]
     ReadAPI["GET /api/docs/content<br/><small>文書取得</small>"]
-    UploadAPI["POST /api/docs/upload<br/><small>文書アップロード</small>"]
-    DeleteAPI["DELETE /api/docs<br/><small>文書削除</small>"]
+    UploadAPI["POST /api/docs/upload<br/><small>md・画像アップロード</small>"]
+    DeleteAPI["DELETE /api/docs<br/><small>ファイル削除</small>"]
     LayoutAPI["PUT/GET /api/sites/layout<br/><small>レイアウト管理</small>"]
 
     Bucket["S3 バケット<br/><small>docs/ プレフィックス</small>"]
@@ -161,6 +172,8 @@ flowchart LR
 
 
 ## 4. 開発環境
+
+Docker Dev Container 上で開発する。Node.js モノレポ構成で、editor-core を共有ライブラリとして各プラットフォームが利用する。
 
 ```mermaid
 flowchart TB
@@ -209,6 +222,8 @@ flowchart TB
 
 ## 5. 構成要素一覧
 
+各サービス・ツールの詳細仕様。
+
 ### 5.1 ホスティング・ストレージ
 
 | サービス | 用途 | リージョン |
@@ -219,7 +234,49 @@ flowchart TB
 | GitHub | ソースコード管理・CI/CD | - |
 
 
-### 5.2 外部サービス
+### 5.2 S3 フォルダ構成
+
+トピック別フォルダ + 言語別 md + 画像共有の構成を採用。
+
+```
+s3://{S3_DOCS_BUCKET}/
+└── {S3_DOCS_PREFIX}/              # デフォルト: "docs/"
+    ├── _layout.json               # サイト構造定義（カテゴリ・アイテム）
+    ├── getting-started/
+    │   ├── index-ja.md            # 日本語ドキュメント
+    │   ├── index-en.md            # 英語ドキュメント
+    │   └── images/                # 画像は言語共通
+    │       ├── install-step1.png
+    │       └── install-step2.png
+    ├── features/
+    │   ├── index-ja.md
+    │   ├── index-en.md
+    │   └── images/
+    │       ├── editor-preview.png
+    │       └── split-view.gif
+    └── infrastructure/
+        ├── index-ja.md
+        ├── index-en.md
+        └── images/
+            └── architecture.png
+```
+
+| 項目 | 規則 |
+| --- | --- |
+| トピックフォルダ | `{topic}/` — 1 トピックにつき 1 フォルダ |
+| 日本語 md | `index-ja.md` |
+| 英語 md | `index-en.md` |
+| 画像フォルダ | `{topic}/images/` — 言語間で共有 |
+| 言語固有の画像 | `{topic}/images/{name}-ja.png` のように命名で対応 |
+| md 内の画像参照 | 相対パス `![説明](./images/screenshot.png)` |
+| `_layout.json` の key | `docs/features/index-ja.md` 形式 |
+| URL パラメータ | `?key=docs/features/index-ja.md` |
+
+> 画像の相対パスは `/api/docs/content` が返却時に CloudFront URL（または API URL）に自動変換する。
+
+
+### 5.3 外部サービス
+
 
 | サービス | 用途 | 必須 |
 | --- | --- | :---: |
@@ -227,7 +284,7 @@ flowchart TB
 | PlantUML Server | 図のレンダリング | x |
 
 
-### 5.3 認証・セキュリティ
+### 5.4 認証・セキュリティ
 
 | 対象 | 方式 | 環境変数 |
 | --- | --- | --- |
@@ -236,7 +293,7 @@ flowchart TB
 | AWS S3 アクセス | IAM アクセスキー | `ANYTIME_AWS_ACCESS_KEY_ID` / `ANYTIME_AWS_SECRET_ACCESS_KEY` |
 
 
-### 5.4 ビルド成果物
+### 5.5 ビルド成果物
 
 | 成果物 | 出力先 | 配布先 |
 | --- | --- | --- |

@@ -1,9 +1,15 @@
-# Infrastructure Diagram
+# Infrastructure
 
-Updated: 2026-03-08
+Updated: 2026-03-21
+
+Infrastructure documentation for Anytime Markdown, organized with diagrams and tables.
+Covers overall architecture, CI/CD, data flow, development environment, and S3 folder structure.
 
 
 ## 1. Overall Architecture
+
+Available from 3 platforms: browser, VS Code, and Android.
+Hosted on Netlify with document storage on AWS S3.
 
 ```mermaid
 flowchart TB
@@ -61,6 +67,8 @@ flowchart TB
 
 ## 2. CI/CD Pipeline
 
+Automated pipeline via GitHub Actions. Runs build, test, and deploy on push, plus scheduled security audits.
+
 ```mermaid
 flowchart LR
     %% Style definitions
@@ -112,6 +120,9 @@ flowchart LR
 
 ## 3. Data Flow (Document Management)
 
+Data flow for landing page document display and CMS operations (upload, delete, layout management).
+CMS operations are protected by Basic authentication.
+
 ```mermaid
 flowchart LR
     %% Style definitions
@@ -126,8 +137,8 @@ flowchart LR
 
     ListAPI["GET /api/docs<br/><small>List documents</small>"]
     ReadAPI["GET /api/docs/content<br/><small>Get document</small>"]
-    UploadAPI["POST /api/docs/upload<br/><small>Upload document</small>"]
-    DeleteAPI["DELETE /api/docs<br/><small>Delete document</small>"]
+    UploadAPI["POST /api/docs/upload<br/><small>Upload md & images</small>"]
+    DeleteAPI["DELETE /api/docs<br/><small>Delete file</small>"]
     LayoutAPI["PUT/GET /api/sites/layout<br/><small>Layout management</small>"]
 
     Bucket["S3 Bucket<br/><small>docs/ prefix</small>"]
@@ -160,6 +171,8 @@ flowchart LR
 
 
 ## 4. Development Environment
+
+Development runs on a Docker Dev Container. Uses Node.js monorepo with editor-core as a shared library across platforms.
 
 ```mermaid
 flowchart TB
@@ -208,6 +221,7 @@ flowchart TB
 
 ## 5. Component List
 
+Detailed specifications for each service and tool.
 
 ### 5.1 Hosting & Storage
 
@@ -219,7 +233,48 @@ flowchart TB
 | GitHub | Source code management / CI/CD | - |
 
 
-### 5.2 External Services
+### 5.2 S3 Folder Structure
+
+Topic-based folders with language-specific md files and shared images.
+
+```
+s3://{S3_DOCS_BUCKET}/
+└── {S3_DOCS_PREFIX}/              # Default: "docs/"
+    ├── _layout.json               # Site structure definition (categories & items)
+    ├── getting-started/
+    │   ├── index-ja.md            # Japanese document
+    │   ├── index-en.md            # English document
+    │   └── images/                # Images shared across languages
+    │       ├── install-step1.png
+    │       └── install-step2.png
+    ├── features/
+    │   ├── index-ja.md
+    │   ├── index-en.md
+    │   └── images/
+    │       ├── editor-preview.png
+    │       └── split-view.gif
+    └── infrastructure/
+        ├── index-ja.md
+        ├── index-en.md
+        └── images/
+            └── architecture.png
+```
+
+| Item | Convention |
+| --- | --- |
+| Topic folder | `{topic}/` — one folder per topic |
+| Japanese md | `index-ja.md` |
+| English md | `index-en.md` |
+| Image folder | `{topic}/images/` — shared across languages |
+| Language-specific images | Named as `{topic}/images/{name}-ja.png` |
+| Image references in md | Relative path `![description](./images/screenshot.png)` |
+| `_layout.json` key | `docs/features/index-ja.md` format |
+| URL parameter | `?key=docs/features/index-ja.md` |
+
+> Relative image paths are automatically converted to CloudFront URLs (or API URLs) when `/api/docs/content` returns the document.
+
+
+### 5.3 External Services
 
 | Service | Purpose | Required |
 | --- | --- | :---: |
@@ -227,7 +282,7 @@ flowchart TB
 | PlantUML Server | Diagram rendering | x |
 
 
-### 5.3 Auth & Security
+### 5.4 Auth & Security
 
 | Target | Method | Environment Variables |
 | --- | --- | --- |
@@ -236,7 +291,7 @@ flowchart TB
 | AWS S3 access | IAM access key | `ANYTIME_AWS_ACCESS_KEY_ID` / `ANYTIME_AWS_SECRET_ACCESS_KEY` |
 
 
-### 5.4 Build Artifacts
+### 5.5 Build Artifacts
 
 | Artifact | Output Path | Distribution |
 | --- | --- | --- |
