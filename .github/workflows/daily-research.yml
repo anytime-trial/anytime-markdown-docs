@@ -1,0 +1,63 @@
+name: Daily Technical Research
+
+on:
+  schedule:
+    # JST 17:00 (UTC 8:00) ※動作確認用、確認後 JST 7:00 (UTC 22:00) に変更
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    inputs:
+      custom_prompt:
+        description: 'Override prompt (leave empty to use default)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set date
+        id: date
+        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Read prompt file
+        id: prompt
+        run: |
+          if [ -n "${{ inputs.custom_prompt }}" ]; then
+            echo "content<<PROMPT_EOF" >> "$GITHUB_OUTPUT"
+            echo "${{ inputs.custom_prompt }}" >> "$GITHUB_OUTPUT"
+            echo "PROMPT_EOF" >> "$GITHUB_OUTPUT"
+          else
+            echo "content<<PROMPT_EOF" >> "$GITHUB_OUTPUT"
+            cat .claude/prompts/daily-research.md >> "$GITHUB_OUTPUT"
+            echo "PROMPT_EOF" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run Claude Code
+        uses: anthropics/claude-code-action@v1
+        with:
+          prompt: |
+            ${{ steps.prompt.outputs.content }}
+
+            調査日: ${{ steps.date.outputs.date }}
+
+            結果を tmp/daily-research/${{ steps.date.outputs.date }}.md に保存してください。
+            ファイルの先頭に以下のヘッダーを付けてください:
+
+            # Daily Technical Research - ${{ steps.date.outputs.date }}
+
+            調査が完了したら、git add と git commit を行ってください。
+            コミットメッセージ: "docs: daily research ${{ steps.date.outputs.date }}"
+          model: claude-sonnet-4-20250514
+          allowed_tools: "Read,Write,Edit,WebSearch,WebFetch,Bash(git add *),Bash(git commit *),Bash(git status),Bash(ls *),Bash(mkdir *),Bash(cat *)"
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Push changes
+        run: git push
